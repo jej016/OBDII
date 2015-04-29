@@ -63,11 +63,17 @@ private slots:
     void on_inputEdit_returnPressed();
 
 
+    void on_actionAbout_triggered();
+
+    void on_sbTimeout_valueChanged(int newVal);
+    void on_jsonSave_clicked();
+
 private:
 
     bool visibility;
     bool speedClicked;
     bool rpmClicked;
+    bool loadClicked;
 
     Ui::MainWindow *ui;
     serial::PortReaderWriter *conn;
@@ -106,6 +112,8 @@ private:
     QVector<double> vruntime;
     QVector<double> vthrotlepercent;
     OBD2Client clientsocet;
+
+    QVector<QPair<QString,QVector<double> > > CollectData();
 
 };
 

@@ -5,8 +5,7 @@
 #include "qcustomplot.h"
 #include "obd2client.h"
 #include "ParseJson.h"
-
-bool loadClicked;
+#include "DataOut.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -17,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
     setWindowTitle("Group 2 Software Engineering ODBII Reader");
+    this->conn->timeoutMillis = ui->sbTimeout->value();
 
     /* disable these widgets when there is no connection present */
     ui->submitButton->setDisabled(true);
@@ -42,13 +42,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->connectStatus->setValue(0);
 
-    for (int i = 0; i < 3; i++){
-        ui->customPlot->addGraph();
-    }
     ui->customPlot->legend->setVisible(true);
     QFont legendFont;  // start out with MainWindow's font..
     legendFont.setPointSize(9); // and make a bit smaller for legend
     ui->customPlot->legend->setFont(legendFont);
+
+    for (int i = 0; i < 3; i++){
+        ui->customPlot->addGraph();
+        ui->customPlot->graph(i)->removeFromLegend();
+    }
 
     ui->distanceTraveledBox->setDisabled(true);
     ui->engineCoolantBox->setDisabled(true);
@@ -155,7 +157,6 @@ void MainWindow::on_monitorButton_clicked() {
     // monitoring the RPM
     ui->checkEngineButton->setDisabled(visibility);
     ui->submitButton->setDisabled(visibility);
-    ui->connectButton->setDisabled(visibility);
     visibility = !visibility;
 
     speedClicked = !speedClicked;
@@ -292,7 +293,7 @@ void MainWindow::setupGraph(QCustomPlot *customPlot, QString dataName, bool &dat
     }
     else if ("load" == dataName){
         data = vload;
-        count = loadCount;
+        count = rpmCount;
         graphNumb = 2;
     graphColor = QPen(Qt::green);
     }
@@ -359,24 +360,27 @@ void MainWindow::setupGraph(QCustomPlot *customPlot, QString dataName, bool &dat
       }
 
       // create graph and assign data to it:
-      //customPlot->addGraph();
+      customPlot->graph(graphNumb)->setVisible(true);
       customPlot->graph(graphNumb)->setData(c,data);
 
       // give the axes some labels:
       customPlot->xAxis->setLabel("Count");
-      customPlot->yAxis->setLabel("Speed (MPH) and RPMx100");
+      customPlot->yAxis->setLabel("Speed (KPH) and RPMx100");
 
       // set axes ranges, so we see all data:
       customPlot->xAxis->setRange(0, count - 1);
       customPlot->yAxis->setRange(0, 150);
       customPlot->graph(graphNumb)->setPen(graphColor); // line color blue for first graph
       customPlot->graph(graphNumb)->setBrush(QBrush(QColor(0, 0, 255, 20))); // first graph will be filled with translucent blue
+      customPlot->graph(graphNumb)->addToLegend();
 //      customPlot->graph(graphNumb)->setBrush(QBrush(Qt::lightGray)); // first graph will be filled with translucent blue
 //      customPlot->graph(graphNumb)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 10));
   }
   else{
-      ui->customPlot->removeGraph(graphNumb);
-      ui->customPlot->addGraph();
+      ui->customPlot->graph(graphNumb)->setVisible(false);
+      customPlot->graph(graphNumb)->setBrush(QBrush(QColor(0, 0, 0, 0)));
+      customPlot->graph(graphNumb)->removeFromLegend();
+      //      ui->customPlot->addGraph();
   }
   dataClicked = !dataClicked;
   customPlot->graph(0)->setName("RPM");
@@ -409,6 +413,7 @@ void MainWindow::on_connectButton_clicked()
         delete this->conn;
         this->connected = false;
         this->conn = new serial::PortReaderWriter();
+        this->conn->timeoutMillis = ui->sbTimeout->value();
 
         QFont font;
         font.setPointSize(12);
@@ -491,7 +496,57 @@ void MainWindow::on_saveGraphButton_clicked()
     printer.setOutputFileName(fileName);
     ui->textEdit->document()->print(&printer);
   }
+
+  QVector<QPair<QString,QVector<double> > > collectedData = CollectData();
+  DataOut *testThread = new DataOut(collectedData, false);
+  testThread->start();
+
+
+}
+
+QVector<QPair<QString,QVector<double> > > MainWindow::CollectData(){
+
+    auto collectedData = QVector<QPair<QString, QVector<double> > >();
+    if (vspeed.size() > 0) collectedData.append(qMakePair(QString("vspeed"), vspeed));
+    if (vrpm.size() > 0) collectedData.append(qMakePair(QString("vrpm"), vrpm));
+    if (vpressure.size() > 0) collectedData.append(qMakePair(QString("vpressure"), vpressure));
+    if (vdistance.size() > 0) collectedData.append(qMakePair(QString("vdistance"), vdistance));
+    if (vcooltemp.size() > 0) collectedData.append(qMakePair(QString("vcooltemp"), vcooltemp));
+    if (vload.size() > 0) collectedData.append(qMakePair(QString("vload"), vload));
+    if (voiltemp.size() > 0) collectedData.append(qMakePair(QString("voiltemp"), voiltemp));
+    if (vethanolpercent.size() > 0) collectedData.append(qMakePair(QString("vethanolpercent"), vethanolpercent));
+    if (vratio.size() > 0) collectedData.append(qMakePair(QString("vratio"), vratio));
+    if (vfuelpercent.size() > 0) collectedData.append(qMakePair(QString("vfuelpercent"), vfuelpercent));
+    if (vfuelpressure.size() > 0) collectedData.append(qMakePair(QString("vfuelpressure"), vfuelpressure));
+    if (vairtemp.size() > 0) collectedData.append(qMakePair(QString("vairtemp"), vairtemp));
+    if (vmanifoldpressure.size() > 0) collectedData.append(qMakePair(QString("vmanifoldpressure"), vmanifoldpressure));
+    if (vruntime.size() > 0) collectedData.append(qMakePair(QString("vruntime"), vruntime));
+    if (vthrotlepercent.size() > 0) collectedData.append(qMakePair(QString("vthrotlepercent"), vthrotlepercent));
+
+    return collectedData;
 }
 
 void MainWindow::on_uploadButton_clicked(){
+
+    QVector<QPair<QString,QVector<double> > > collectedData = CollectData();
+    DataOut *testThread = new DataOut(collectedData, true);
+    testThread->start();
+
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    QMessageBox::information(this,"About","Authors:\nZac Slade, Zac Wisdom, Vitaly Borodin, Joseph Jenkins\n\nCreated:\nSpring 2015");
+}
+
+void MainWindow::on_sbTimeout_valueChanged(int newVal)
+{
+    this->conn->timeoutMillis = newVal;
+}
+
+void MainWindow::on_jsonSave_clicked(){
+    qDebug() << "Clicked the save to file button.";
+    QVector<QPair<QString,QVector<double> > > collectedData = CollectData();
+    DataOut *testThread = new DataOut(collectedData, false);
+    testThread->start();
 }
