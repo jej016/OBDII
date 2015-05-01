@@ -28,7 +28,7 @@ public:
 
     void setupSpeedGraph(QCustomPlot *customPlot);
     void setupRPMGraph(QCustomPlot *customPlot);
-    void setupGraph(QCustomPlot *customPlot, QString dataName, bool &dataClicked);
+    void setupGraph(QCustomPlot *customPlot, QString dataName, bool dataClicked);
 
 private slots:
 
@@ -71,30 +71,11 @@ private:
     QMutex mtx;
 
     bool visibility;
-    bool speedClicked;
-    bool rpmClicked;
-    bool loadClicked;
     bool monitorDataLoop;
 
     Ui::MainWindow *ui;
     serial::PortReaderWriter *conn;
     bool connected;
-    int speedCount;
-    int rpmCount;
-    int pressCount;
-    int distanceCount;
-    int coolCount;
-    int loadCount;
-    int oilTempCount;
-    int ethPercCount;
-    int ratioCount;
-    int fuelPercCount;
-    int fuelPressCount;
-    int airTempCount;
-    int manPressCount;
-    int runTimeCount;
-    int throtlePercCount;
-    int levelCount;
 
     QVector<double> vspeed;
     QVector<double> vrpm;

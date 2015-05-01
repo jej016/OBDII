@@ -24,13 +24,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->checkEngineButton->setDisabled(true);
     ui->monitorButton->setDisabled(true);
 
-    speedCount = 1;
-    rpmCount = 1;
-
     visibility = true;
-    speedClicked = false;
-    rpmClicked = false;
-    loadClicked = false;
+//    speedClicked = false;
+//    rpmClicked = false;
+//    loadClicked = false;
     monitorDataLoop = false;
 
     // register the plot document object (only needed once, no matter how many plots will be in the QTextDocument):
@@ -128,7 +125,6 @@ void MainWindow::monitorData()
             vspeed.append(0);
         else
             vspeed.append(vehicleSpeed);
-        speedCount++;
     }
 
     if (ui->rpmBox->isChecked())
@@ -141,8 +137,6 @@ void MainWindow::monitorData()
             vrpm.append(0);
         else
             vrpm.append(rpmVal/100);
-
-        rpmCount++;
     }
 
     if (ui->engineLoadBox->isChecked())
@@ -155,19 +149,12 @@ void MainWindow::monitorData()
             vload.append(0);
         else
             vload.append(eload);
-
-        loadCount++;
     }
-    // not necessary now, but the code to set
-    // the other buttons to disabled while
-    // monitoring the RPM
+
     ui->checkEngineButton->setDisabled(visibility);
     ui->submitButton->setDisabled(visibility);
     visibility = !visibility;
 
-    speedClicked = !speedClicked;
-    rpmClicked = !rpmClicked;
-    loadClicked = !loadClicked;
     on_rpmBox_clicked();
     on_speedBox_clicked();
     on_engineLoadBox_clicked();
@@ -192,7 +179,7 @@ void MainWindow::on_engineCoolantBox_clicked(){
 
 void MainWindow::on_engineLoadBox_clicked(){
     QString name = "load";
-    setupGraph(ui->customPlot, name, loadClicked);
+    setupGraph(ui->customPlot, name, ui->engineLoadBox->isChecked());
 
 }
 
@@ -234,11 +221,11 @@ void MainWindow::on_throtlePositionBox_clicked(){
 
 void MainWindow::on_speedBox_clicked() {
     QString name = "speed";
-    setupGraph(ui->customPlot, name, speedClicked); }
+    setupGraph(ui->customPlot, name, ui->speedBox->isChecked()); }
 
 void MainWindow::on_rpmBox_clicked() {
     QString name = "rpm";
-    setupGraph(ui->customPlot, name, rpmClicked); }
+    setupGraph(ui->customPlot, name, ui->rpmBox->isChecked()); }
 
 void MainWindow::sendRawData() {
     QString instr = ui->inputEdit->text();
@@ -264,7 +251,7 @@ void MainWindow::sendRawData() {
     ui->inputEdit->selectAll();
 }
 
-void MainWindow::setupGraph(QCustomPlot *customPlot, QString dataName, bool &dataClicked)
+void MainWindow::setupGraph(QCustomPlot *customPlot, QString dataName, bool dataClicked)
 {
     QVector<double> data;
     int count;
@@ -274,98 +261,84 @@ void MainWindow::setupGraph(QCustomPlot *customPlot, QString dataName, bool &dat
     // determine which set of data to use
     if("rpm" == dataName){
         data = vrpm;
-        count = rpmCount;
         graphNumb = 0;
     }
     else if ("speed" == dataName){
         data = vspeed;
-        count = speedCount;
         graphNumb = 1;
 	graphColor = QPen(Qt::blue);
     }
     else if ("barometric" == dataName){
         data = vpressure;
-        count = pressCount;
         graphNumb = 5;
     graphColor = QPen(Qt::blue);
     }
     else if ("distance" == dataName){
         data = vdistance;
-        count = distanceCount;
         graphNumb = 3;
     graphColor = QPen(Qt::blue);
     }
     else if ("coolant" == dataName){
         data = vcooltemp;
-        count = coolCount;
         graphNumb = 4;
     graphColor = QPen(Qt::blue);
     }
     else if ("load" == dataName){
         data = vload;
-        count = rpmCount;
         graphNumb = 2;
     graphColor = QPen(Qt::green);
     }
     else if ("oil" == dataName){
         data = voiltemp;
-        count = oilTempCount;
         graphNumb = 6;
     graphColor = QPen(Qt::blue);
     }
     else if ("fuelPercent" == dataName){
         data = vfuelpercent;
-        count = fuelPercCount;
         graphNumb = 7;
     graphColor = QPen(Qt::blue);
     }
     else if ("fuelAir" == dataName){
         data = vratio;
-        count = ratioCount;
         graphNumb = 8;
     graphColor = QPen(Qt::blue);
     }
     else if ("fuelLevel" == dataName){
         data = vlevel;
-        count = levelCount;
         graphNumb = 9;
     graphColor = QPen(Qt::blue);
     }
     else if ("fuelPressure" == dataName){
         data = vfuelpressure;
-        count = fuelPressCount;
         graphNumb = 10;
     graphColor = QPen(Qt::blue);
     }
     else if ("intakeTemp" == dataName){
         data = vairtemp;
-        count = airTempCount;
         graphNumb = 11;
     graphColor = QPen(Qt::blue);
     }
     else if ("intakePress" == dataName){
         data = vmanifoldpressure;
-        count = manPressCount;
         graphNumb = 12;
     graphColor = QPen(Qt::blue);
     }
     else if ("runTime" == dataName){
         data = vruntime;
-        count = runTimeCount;
         graphNumb = 13;
     graphColor = QPen(Qt::blue);
     }
     else if ("throttlePos" == dataName){
         data = vthrotlepercent;
-        count = throtlePercCount;
         graphNumb = 14;
     graphColor = QPen(Qt::blue);
     }
 
+    count = data.length();
     QVector<double> c;
 
     // if the checkbox is clicked, graph the data
-    if (dataClicked == false){
+    if (dataClicked){
       for (int i=0; i<=count; i++)
       {
           c.append(i);
@@ -393,7 +366,6 @@ void MainWindow::setupGraph(QCustomPlot *customPlot, QString dataName, bool &dat
       customPlot->graph(graphNumb)->setBrush(QBrush(QColor(0, 0, 0, 0)));
       customPlot->graph(graphNumb)->removeFromLegend();
   }
-  dataClicked = !dataClicked;
 
   // Set graph names and colors
   customPlot->graph(0)->setName("RPM");
