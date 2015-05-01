@@ -178,8 +178,7 @@ void MainWindow::on_engineCoolantBox_clicked(){
 }
 
 void MainWindow::on_engineLoadBox_clicked(){
-    QString name = "load";
-    setupGraph(ui->customPlot, name, ui->engineLoadBox->isChecked());
+    setupGraph(ui->customPlot, QString("load"), ui->engineLoadBox->isChecked());
 
 }
 
@@ -220,12 +219,10 @@ void MainWindow::on_throtlePositionBox_clicked(){
 }
 
 void MainWindow::on_speedBox_clicked() {
-    QString name = "speed";
-    setupGraph(ui->customPlot, name, ui->speedBox->isChecked()); }
+    setupGraph(ui->customPlot, QString("speed"), ui->speedBox->isChecked()); }
 
 void MainWindow::on_rpmBox_clicked() {
-    QString name = "rpm";
-    setupGraph(ui->customPlot, name, ui->rpmBox->isChecked()); }
+    setupGraph(ui->customPlot, QString("rpm"), ui->rpmBox->isChecked()); }
 
 void MainWindow::sendRawData() {
     QString instr = ui->inputEdit->text();
